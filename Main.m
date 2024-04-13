@@ -14,7 +14,7 @@ addpath('rec_output/')
 register = true;
 
  % For loading stl files:
-fname = "3D_face_refined.stl"; % Very wavy reconstruction at only n = 20 ( we need at least n=40 as the SCHA paper)
+% fname = "3D_face_refined.stl"; % Very wavy reconstruction at only n = 20 ( we need at least n=40 as the SCHA paper)
 % fname = "3D_face_refined4.stl"; % Very wavy reconstruction at only n = 20 ( we need at least n=40 as the SCHA paper)
 % fname = "Matterhorn_new_mode.stl"; % Very wavy reconstruction at n = 20 (we need n=60 as DHA paper)
 % fname = "half_stone.stl"; % The reconstruction is really good here (n = 30)!
@@ -22,8 +22,9 @@ fname = "3D_face_refined.stl"; % Very wavy reconstruction at only n = 20 ( we ne
 % fname = "3D_face_refined4_filled_v3.stl";
 % fname = "half_human_femur.stl";
 % fname = "human_face.stl"; % The input mesh is very sparse and reconstruction results are bad
+% fname = "bumpy_ref_AR_3_open.stl";
 
-[v, f, ~, ~] = stlRead(fname); % Uncomment only when loading STL files.
+% [v, f, ~, ~] = stlRead(fname); % Uncomment only when loading STL files.
 
 % For loading *.mat files
 % fname = 'chinese_lion.mat'; % The reconstruction kind of acceptable (tested to n = 30)!
@@ -35,7 +36,7 @@ fname = "3D_face_refined.stl"; % Very wavy reconstruction at only n = 20 ( we ne
 % fname = "D09_sas_aligned.mat";
 % fname = "S09_sas_aligned.mat"; % very good
 % fname = "T12_sas_aligned.mat"; % very good
-% fname = "u16_sas_aligned.mat"; % kinda fails
+fname = "u16_sas_aligned.mat"; % Perfect with AP
 % fname = "V09_sas_aligned.mat"; % good
 % fname = "w02_sas_aligned.mat"; % good
 % fname = "x02_sas_aligned.mat"; % good
@@ -45,11 +46,11 @@ fname = "3D_face_refined.stl"; % Very wavy reconstruction at only n = 20 ( we ne
 % fname = "k18_sas_aligned.mat";
 % fname = "J12_sas_aligned.mat";
 % fname = "i23_sas_aligned.mat"; % all good until here
-% fname = "H19_sas_aligned.mat"; % fails
+% fname = "H19_sas_aligned.mat"; % AP is magic
 % fname = "B03_sas_aligned.mat"; % good maybe alignement need to be fiexd
 
 
-% load(fname);  % Uncomment only when loading MAT files.
+load(fname);  % Uncomment only when loading MAT files.
 
 
 
@@ -64,9 +65,10 @@ beta = 0.1857;
 gamma = 0.4071;
 
 % Parameter setting
-max_n = 25; % Max Analysis degree
+max_n = 30; % Max Analysis degree
 rec_max_n = max_n; % Max reconstruction degree
 edge_length = 0.0350; % Reconstruction domain resolution
+% edge_length = 0.01250; % Reconstruction domain resolution
 
 % plot_mesh(v,f,mean_curv); 
 plot_mesh(v,f);
@@ -100,12 +102,16 @@ zlabel('z')
 % This part needs more work (Discuss with Gary the optimization)
 
 % Bounding box after alignment
-BB_x = max(new_v(:, 1)) - min(new_v(:, 1));
-BB_y = max(new_v(:, 2)) - min(new_v(:, 2));
-BB_z = max(new_v(:, 3)) - min(new_v(:, 3));
+BB_d = max(new_v) - min(new_v);
+BB_x = BB_d(1); BB_y = BB_d(2); BB_z = BB_d(3);
+% BB_x = max(new_v(:, 1)) - min(new_v(:, 1));
+% BB_y = max(new_v(:, 2)) - min(new_v(:, 2));
+% BB_z = max(new_v(:, 3)) - min(new_v(:, 3)); % height of the BB
+
+BB_z = mean(new_v(:, 3)); % mean height of the BB
 
 BB_xy = mean([BB_x, BB_y]);
-BB_z_normalized = BB_z / BB_xy;
+BB_z_normalized = abs(BB_z) / BB_xy;
 
 if BB_z_normalized >= 1
     hemispheroid_type = "prolate";
@@ -114,7 +120,7 @@ else
 end
 
 %% Compute the spheroidal coordinates parameters (with a unit disk base)
-foci = sqrt(abs(1 - BB_z_normalized^2)); % Focal distance
+foci = sqrt(abs(1 - BB_z_normalized^2)); % Focal distance (of normalized base r = 1)
 if hemispheroid_type == "prolate"
     zeta = asinh(1 / foci);
     aa = sinh(zeta) * foci; % "a" axis size (re-calculate)
@@ -262,6 +268,7 @@ resolution = 100; % We don't use it with option 1
 rec_v(:, 3) = rec_v(:, 3) * cc; % This will slightly deform the areas/angles of the tirangles
 
 [rec_thetas, rec_phis] = cart2spheroid(rec_v, foci, zeta, hemispheroid_type);
+
 
 rec_D_mat = hemispheroidal_harmonic_basis(rec_max_n, rec_thetas, ...
     rec_phis, hemispheroid_type);

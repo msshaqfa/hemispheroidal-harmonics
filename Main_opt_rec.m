@@ -12,13 +12,25 @@ addpath('rec_output/')
 %% Load meshes and files
 
 register = true;
+opt_type="size_opt";
+% opt_size_map = "tutte";
+% opt_size_map = "conformal";
+opt_size_map = "area";
+% opt_size_map = "balanced";
+alpha = 0.4071;
+beta = 0.1857;
+gamma = 0.4071;
+
+% opt_type="map_opt";
+
 
  % For loading stl files:
 % fname = "3D_face_refined.stl"; % Very wavy reconstruction at only n = 20 ( we need at least n=40 as the SCHA paper)
 % fname = "3D_face_refined4.stl"; % Very wavy reconstruction at only n = 20 ( we need at least n=40 as the SCHA paper)
 % fname = "Matterhorn_new_mode.stl"; % Very wavy reconstruction at n = 20 (we need n=60 as DHA paper)
+% fname = "3D_face_refined4_filled_v3.stl";
 
-fname = "half_stone.stl"; % The reconstruction is really good here (n = 30)!
+% fname = "half_stone.stl"; % The reconstruction is really good here (n = 30)!
 % alpha = 0.9306, beta = 0.0693, gamma = 1.5882e-04 ( n = 15)
 % alpha = 0.4795, beta = 0.4795, gamma = 0.0410 ( n = 5)
 % 0.5647    0.4313    0.0041 (n = 20)
@@ -28,8 +40,9 @@ fname = "half_stone.stl"; % The reconstruction is really good here (n = 30)!
 % fname = "3D_face_refined4_filled_v3.stl";
 % fname = "half_human_femur.stl";
 % fname = "human_face.stl";
+% fname = "bumpy_ref_AR_3_open.stl";
 
-[v, f, ~, ~] = stlRead(fname); % Uncomment only when loading STL files.
+% [v, f, ~, ~] = stlRead(fname); % Uncomment only when loading STL files.
 
 
 
@@ -38,7 +51,25 @@ fname = "half_stone.stl"; % The reconstruction is really good here (n = 30)!
 % fname = 'human_brain.mat'; % Completely fails in reconstruction
 % fname = 'human_face.mat'; % The nose reconstruction will be very complicated (fails)
 
-% load(fname);  % Uncomment only when loading MAT files.
+% Teeth benchmarks
+% fname = "a10_sas_aligned.mat";
+% fname = "D09_sas_aligned.mat";
+% fname = "S09_sas_aligned.mat"; % very good
+% fname = "T12_sas_aligned.mat"; % very good
+fname = "u16_sas_aligned.mat"; % Perfect with AP
+% fname = "V09_sas_aligned.mat"; % good
+% fname = "w02_sas_aligned.mat"; % good
+% fname = "x02_sas_aligned.mat"; % good
+% fname = "t09_sas_aligned.mat"; % good
+% fname = "Q12_sas_aligned.mat"; % good
+% fname = "P32_sas_aligned.mat";
+% fname = "k18_sas_aligned.mat";
+% fname = "J12_sas_aligned.mat";
+% fname = "i23_sas_aligned.mat"; % all good until here
+% fname = "H19_sas_aligned.mat"; % AP is magic
+% fname = "B03_sas_aligned.mat"; % good maybe alignement need to be fiexd
+
+load(fname);  % Uncomment only when loading MAT files.
 
 
 
@@ -46,7 +77,7 @@ fname = "half_stone.stl"; % The reconstruction is really good here (n = 30)!
 max_n = 30; % Max Analysis degree
 rec_max_n = max_n; % Max reconstruction degree
 
-opt_rec_max_n = 10; % For the optimization problem
+opt_rec_max_n = 30; % For the optimization problem
 
 edge_length = 0.0350; % Reconstruction domain resolution
 
@@ -82,12 +113,12 @@ zlabel('z')
 % This part needs more work (Discuss with Gary the optimization)
 
 % Bounding box after alignment
-BB_x = max(new_v(:, 1)) - min(new_v(:, 1));
-BB_y = max(new_v(:, 2)) - min(new_v(:, 2));
-BB_z = max(new_v(:, 3)) - min(new_v(:, 3));
+BB_d = max(new_v) - min(new_v);
+BB_x = BB_d(1); BB_y = BB_d(2);
+BB_z = mean(new_v(:, 3)); % mean height of the BB
 
 BB_xy = mean([BB_x, BB_y]);
-BB_z_normalized = BB_z / BB_xy;
+BB_z_normalized = abs(BB_z) / BB_xy;
 
 if BB_z_normalized >= 1
     hemispheroid_type = "prolate";
@@ -125,27 +156,74 @@ disp(strcat("The surface is ", hemispheroid_type, " with a = ",...
     num2str(aa), " and c = ", num2str(cc)))
 %% Optimize ellipsoidal mapping (Optimal reconstruction via balance mapping)
 
-
-% Precompute mappings
-map_T = hemispheroidal_tutte_map(new_v, f, cc);
-map_C = hemispheroidal_conformal_map(new_v, f, cc);        
-map_A = hemispheroidal_area_preserving_map(new_v, f, cc);
-
 hemispheroid_data = [];
-hemispheroid_data.foci = foci;
-hemispheroid_data.zeta = zeta;
-hemispheroid_data.hemispheroid_type = hemispheroid_type;
-hemispheroid_data.c = cc; % This is redundant.
+
+if opt_type == "size_opt"
+    hemispheroid_data.opt_type = opt_type;
+    hemispheroid_data.opt_size_map = opt_size_map;
+    hemispheroid_data.foci = foci;
+    hemispheroid_data.zeta = zeta;
+    hemispheroid_data.hemispheroid_type = hemispheroid_type;
+    hemispheroid_data.c = cc; % This is redundant.
+    hemispheroid_data.alpha = alpha;
+    hemispheroid_data.beta = beta;
+    hemispheroid_data.gamma = gamma;
+    % Optimize balanced mapping
+    disp("The size optimization stage")
+    tic
+    [map,alpha,beta,gamma,c_opt,qm_k_i] = opt_size4rec(new_v, f, opt_rec_max_n, hemispheroid_data);
+    toc
+    disp('Optimal hemispheroidal depth (new) vs (old):')
+    disp([c_opt, BB_z_normalized])
 
 
-% Optimize balanced mapping
-disp("The optimization stage")
-tic
-[map,alpha,beta,gamma,qm_k_i] = opt_map4rec(v, f, map_T, map_C, map_A, opt_rec_max_n, hemispheroid_data);
-toc
+    % Plot the optimum hemispheroid:
+    foci = sqrt(abs(1 - c_opt^2)); % Focal distance
+    if hemispheroid_type == "prolate"
+        zeta = asinh(1 / foci);
+        aa = sinh(zeta) * foci; % "a" axis size (re-calculate)
+        cc = cosh(zeta) * foci; % "c" axis size (re-calculate)
 
-disp('Optimal alpha, beta, gamma:')
-disp([alpha, beta, gamma])
+        % Plot implicit surface
+        E_implicit = @(x, y, z) (x.^2 + y.^2) ./ (foci * sinh(zeta))^2 + z.^2 ./ (foci * cosh(zeta))^2 - 1;
+        interval = [-1 1 -1 1 0 foci * cosh(zeta)];
+        fimplicit3(E_implicit, interval,'EdgeColor','none','FaceAlpha',.5)
+        title("Optimized prolate hemispheroid")
+        axis equal
+
+    elseif hemispheroid_type == "oblate"
+        zeta = acosh(1 / foci);
+        aa = cosh(zeta) * foci; % "a" axis size (re-calculate)
+        cc = sinh(zeta) * foci; % "c" axis size (re-calculate)
+
+        % Plot implicit surface
+        E_implicit = @(x, y, z) (x.^2 + y.^2) ./ (foci * cosh(zeta))^2 + z.^2 ./ (foci * sinh(zeta))^2 - 1;
+        interval = [-1 1 -1 1 0 foci * sinh(zeta)];
+        fimplicit3(E_implicit, interval,'EdgeColor','none','FaceAlpha',.5)
+        title("Optimized oblate hemispheroid")
+        axis equal
+    end
+
+elseif opt_type == "map_opt"
+    % Precompute mappings
+    map_T = hemispheroidal_tutte_map(new_v, f, cc);
+    map_C = hemispheroidal_conformal_map(new_v, f, cc);
+    map_A = hemispheroidal_area_preserving_map(new_v, f, cc);
+
+    hemispheroid_data.opt_size_map = opt_size_map;
+    hemispheroid_data.foci = foci;
+    hemispheroid_data.zeta = zeta;
+    hemispheroid_data.hemispheroid_type = hemispheroid_type;
+    hemispheroid_data.c = cc; % This is redundant.
+
+    % Optimize balanced mapping
+    disp("The balanced map optimization stage")
+    tic
+    [map,alpha,beta,gamma,c_opt,qm_k_i] = opt_map4rec(v, f, map_T, map_C, map_A, opt_rec_max_n, hemispheroid_data);
+    toc
+    disp('Optimal alpha, beta, gamma:')
+    disp([alpha, beta, gamma])
+end
 
 %% Harmonic expansion (Solver)
 [thetas, phis] = cart2spheroid(map, foci, zeta, hemispheroid_type);
