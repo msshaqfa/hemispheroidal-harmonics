@@ -69,4 +69,6 @@ mapcos3=(c3(:,1).*d3(:,1)+c3(:,2).*d3(:,2)+c3(:,3).*d3(:,3))./...
     
 % calculate the angle difference
 distortion = (acos([mapcos1;mapcos2;mapcos3])-acos([vcos1;vcos2;vcos3]))*180/pi;
+% distortion = (acos([mapcos1;mapcos2;mapcos3])-acos([vcos1;vcos2;vcos3]));
+
 

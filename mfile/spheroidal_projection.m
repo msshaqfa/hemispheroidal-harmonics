@@ -1,4 +1,4 @@
-% Bijection between the unit disk and the Northearn hemispheroid with radii a,a,c.
+% Bijection between the unit disk and the Northern hemispheroid with radii a,a,c.
 function P = spheroidal_projection(p,a,c)
     if size(p, 2) == 1
       p = [real(p), imag(p)];
@@ -11,7 +11,7 @@ function P = spheroidal_projection(p,a,c)
       
       P(isnan(z)|(~isfinite(z)),1) = 0;
       P(isnan(z)|(~isfinite(z)),2) = 0;
-      P(isnan(z)|(~isfinite(z)),3) = c;
+      P(isnan(z)|(~isfinite(z)),3) = -c;
         
     else
       z = p(:,3);

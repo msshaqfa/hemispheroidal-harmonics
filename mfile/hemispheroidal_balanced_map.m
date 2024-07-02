@@ -81,17 +81,17 @@ mu_C = beltrami_coefficient(disk,f,P_map_C); % conformal
 mu_A = beltrami_coefficient(disk,f,P_map_A); % area-preserving
 
 % Combine the Beltrami coefficient
-mu_O = alpha*mu_T + beta*mu_C + gamma*mu_A;
+mu_B = alpha*mu_T + beta*mu_C + gamma*mu_A;
 
 % Reconstuct a quasi-conformal map
 if max([alpha,beta,gamma]) == alpha
-    map_O = linear_beltrami_solver(disk,f,mu_O,bdy_v,disk(bdy_v,:));
+    map_B = linear_beltrami_solver(disk,f,mu_B,bdy_v,disk(bdy_v,:));
 elseif max([alpha,beta,gamma]) == beta
-    map_O = linear_beltrami_solver(disk,f,mu_O,bdy_v,P_map_C(bdy_v,:));
+    map_B = linear_beltrami_solver(disk,f,mu_B,bdy_v,P_map_C(bdy_v,:));
 else 
-    map_O = linear_beltrami_solver(disk,f,mu_O,bdy_v,P_map_A(bdy_v,:));
+    map_B = linear_beltrami_solver(disk,f,mu_B,bdy_v,P_map_A(bdy_v,:));
 end
 
 %% Obtain the final hemispheroidal parameterization
-map = spheroidal_projection(map_O,1,c);
+map = spheroidal_projection(map_B,1,c);
 disp('Done.');

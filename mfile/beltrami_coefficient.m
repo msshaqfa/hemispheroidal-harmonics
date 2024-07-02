@@ -16,8 +16,7 @@ if size(f,1) < size(f,2)
     f = f';
 end
 if size(map,1) < size(map,2)
-    map = map';
-end
+    map = map';end
 
 nf = length(f);
 Mi = reshape([1:nf;1:nf;1:nf], [1,3*nf]);

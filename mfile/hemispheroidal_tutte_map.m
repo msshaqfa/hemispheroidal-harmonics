@@ -51,4 +51,5 @@ end
 %% Obtain the final hemispheroidal parameterization
 map = spheroidal_projection(disk,1,c); 
 
+
 end

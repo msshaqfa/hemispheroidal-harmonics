@@ -16,7 +16,9 @@ function plot_mesh(v,f,arg3)
 
 figure; 
 if nargin < 3
-    patch('Faces',f,'Vertices',v,'FaceColor',[0.6,1,1],'LineWidth',0.5);
+    % patch('Faces',f,'Vertices',v,'FaceColor',[254 252 169]/255,'LineWidth',0.5);
+    patch('Faces',f,'Vertices',v,'FaceColor',[200 191 231]/255,'LineWidth',0.5);
+    
 
 else
     patch('Faces',f,'Vertices',v,'FaceColor','flat','FaceVertexCData',arg3,...
