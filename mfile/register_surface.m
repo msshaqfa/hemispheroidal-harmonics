@@ -1,3 +1,45 @@
+%*************************************************************************%
+% All rights reserved (C) to the authors: Mahmoud SHAQFA, Gary CHOI       %
+%                                                                         %
+%                                                                         %
+% M. Shaqfa Contact:                                                      %
+% Department of mechanical engineering,                                   %
+% Massachusetts Institute of Technology (MIT)                             %
+% Cambridge, MA, USA                                                      %
+%               Email: mshaqfa@mit.edu                                    %
+% G. Choi Contact:                                                        %
+% Department of Mathematics, The Chinese University of Hong Kong,         %
+% Hong Kong                                                               %
+%               Email: ptchoi@cuhk.edu.hk                                 %
+%                                                                         %
+%*************************************************************************%
+% This code includes implementations for:                                 %
+%				- Hemispheroidal harmonics analysis (HSOH)                %
+%				- Hemispheroidal parameterization                         %
+%                 -- Area-preserving mapping                              %
+%                 -- Conformal mapping                                    %
+%                 -- Tutte mapping                                        %
+%                 -- Balanced mapping                                     %
+% This code is part of the paper: "Hemispheroidal parameterization and    %
+% harmonic decomposition of simply connected open surfaces"               %
+%                                                                         %
+%*************************************************************************%
+% This library is free software; you can redistribute it and/or modify	  %
+% it under the terms of the GNU Lesser General Public License as published%
+% by the Free Software Foundation; either version 2.1 of the License, or  %
+% (at your option) any later version.                                     %
+%                                                                         %
+% This library is distributed in the hope that it will be useful,         %
+% but WITHOUT ANY WARRANTY; without even the implied warranty of          %
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                    %
+% See the GNU Lesser General Public License for more details.        	  %
+% You should have received a copy of the GNU Lesser General Public License%
+% along with this library; if not, write to the Free Software Foundation, %
+% Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA       %
+%*************************************************************************%
+% Authors of this file: Mahmoud S. Shaqfa @ 2024
+
+
 function [new_v, centroid, V, normal_sign] = register_surface(v, f, plot_figs)
 % Written by: Mahmoud Shaqfa
 % Usage:
@@ -46,7 +88,8 @@ normal_sign = sign(-n);
 % ty = acosd(m);
 % tz = acosd(n);
 
-res = 10; % Just any small number > 2
+% res = 10; % Just any small number > 2
+res = 30; % Just any small number > 2
 plane_x = linspace(min(bds_v(:, 1)), max(bds_v(:, 1)), res);
 plane_y = linspace(min(bds_v(:, 2)), max(bds_v(:, 2)), res);
 [plane_x, plane_y] = meshgrid(plane_x, plane_y);
@@ -74,8 +117,12 @@ new_bds_v = (V' * bds_v')';
 
 if plot_figs
     scatter3(new_bds_v(:, 1), new_bds_v(:, 2), new_bds_v(:, 3), 'kx', 'DisplayName', 'New boundary')
+    % plot3(new_bds_v(:, 1), new_bds_v(:, 2), new_bds_v(:, 3), 'red', 'LineWidth', 4)
+    
     hold on
     scatter3(bds_v_cpy(:, 1), bds_v_cpy(:, 2), bds_v_cpy(:, 3), 'ro', 'DisplayName', 'Old boundary')
+    % plot3(bds_v_cpy(:, 1), bds_v_cpy(:, 2), bds_v_cpy(:, 3), 'blue', 'LineWidth', 4)
+    
     hold on
     surf(plane_x, plane_y, plane_z, 'DisplayName', 'Plane fit', 'AlphaData', 0.1,...
         'FaceAlpha', 0.5, 'EdgeColor', 'none')
@@ -83,9 +130,13 @@ if plot_figs
     C_plane2 = fit_plane(new_bds_v); % second iteration for the new boundaries
     plane_z2 = C_plane2(1) .* plane_x + C_plane2(2) .* plane_y + C_plane2(3); % The plane equation
     surf(plane_x, plane_y, plane_z2, 'DisplayName', 'Plane fit (final)', 'AlphaData', 0.1,...
-        'FaceAlpha', 0.5, 'EdgeColor', 'none')
+        'FaceAlpha', 0.2, 'EdgeColor', 'none', 'FaceColor','b')
     hold off
     legend
+    axis equal tight off
+    % view([-100 10]) % for brain
+    % view([-21.1000, 24.1389]) % for the face
+    box on;
     title("Boundary fitting for surface registratrion")
     xlabel('x')
     ylabel('y')
