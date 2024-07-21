@@ -64,14 +64,6 @@ bds_v =  bds_v - centroid;
 bds_v_cpy = bds_v;
 
 
-% sz = size(v);
-% if sz(1) > verts_limit
-%     idc = randperm(verts_limit);
-%     sub_v = new_v(idc, :);
-% else
-%     sub_v = new_v;
-% end
-
 % Second step: Apply SVD for the surface data (only the exterior boundary)
 C_plane = fit_plane(bds_v);
 
@@ -104,7 +96,6 @@ plane_scatter = [plane_x_vec; plane_y_vec; plane_z_vec]';
 [U, Sigma, V] = svd(plane_scatter);
 
 % Check the normal (flip if necessary)
-% A note for self and Gary: this might be implemented in a smarter way!
 if normal_sign < 0
     disp("Flip the normal!")
     rotz = @(t) [cos(t) -sin(t) 0 ; sin(t) cos(t) 0 ; 0 0 1];
@@ -134,8 +125,6 @@ if plot_figs
     hold off
     legend
     axis equal tight off
-    % view([-100 10]) % for brain
-    % view([-21.1000, 24.1389]) % for the face
     box on;
     title("Boundary fitting for surface registratrion")
     xlabel('x')
